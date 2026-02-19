@@ -26,7 +26,8 @@ def bookCourt(park, court, date, time):
     }
     
     cookies = {
-        "ct": DAILY_COOKIE
+        "ct": DAILY_COOKIE,
+        "sess": DAILY_SESSION
     }
         
     park_IDs = {
@@ -36,7 +37,7 @@ def bookCourt(park, court, date, time):
     }
 
     court_IDs = {
-        "western_park": {
+        "weston_park": {
             "1": "69",
             "2": "70",
         },
@@ -74,11 +75,25 @@ def addDiscount(discountCode):
     }
 
     cookies = {
-        "ct": DAILY_COOKIE
+        "ct": DAILY_COOKIE,
+        "sess": DAILY_SESSION
     }
 
+    basket_page = requests.get(
+        f"https://tennissheffield.com/basket",
+        headers=headers,
+        cookies=cookies
+    )
+
+    soup = BeautifulSoup(basket_page.text, "html.parser")
+
+    csrf_name = soup.find("input", {"name": "csrf_name"})["value"]
+    csrf_value = soup.find("input", {"name": "csrf_value"})["value"]
+
     data = {
-        "code": discountCode
+        "code": discountCode,
+        "csrf_name": csrf_name,
+        "csrf_value": csrf_value
     }
 
     response = requests.post(url, headers=headers, cookies=cookies, data=data)
@@ -95,7 +110,8 @@ def checkCourtAvailability(park, date, time):
     }
 
     cookies = {
-        "ct": DAILY_COOKIE
+        "ct": DAILY_COOKIE,
+        "sess": DAILY_SESSION
     }
 
     response = requests.get(url, headers=headers, cookies=cookies)
@@ -159,3 +175,9 @@ for time in times:
 
 print (checkCourtAvailability("graves-park", "2026-02-11", to_ampm("12:00")))
 '''
+
+#bookCourt("weston_park", "1", "2026-02-23", "11:00")
+#addDiscount(CURRENT_VOUCHER)
+
+possible, court_name = checkCourtAvailability("weston-park", "2026-02-23", to_ampm("11:00"))
+print(f"Court available: {possible}, Court name: {court_name}")
