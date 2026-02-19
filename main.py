@@ -6,6 +6,7 @@ import os
 
 load_dotenv()
 DAILY_COOKIE = os.getenv("DAILY_COOKIE")
+DAILY_SESSION = os.getenv("DAILY_SESSION")
 CURRENT_VOUCHER = os.getenv("CURRENT_VOUCHER")
 
 def bookCourt(park, court, date, time):
@@ -23,8 +24,7 @@ def bookCourt(park, court, date, time):
         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
         "x-requested-with": "XMLHttpRequest",
     }
-
-    # IMPORTANT: Insert your real cookie value here (the "ct=" value)
+    
     cookies = {
         "ct": DAILY_COOKIE
     }
