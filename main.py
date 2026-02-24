@@ -31,9 +31,9 @@ def bookCourt(park, court, date, time):
     }
         
     park_IDs = {
-        "western_park": "37",
+        "weston_park": "37",
         "graves_park": "36",
-        "bingham_park": None
+        "bingham_park": "76"
     }
 
     court_IDs = {
@@ -49,8 +49,8 @@ def bookCourt(park, court, date, time):
             "5": "75",
         },
         "bingham_park": {
-            "1": None,
-            "2": None,
+            "1": "100",
+            "2": "101",
         }
     }
 
@@ -62,7 +62,7 @@ def bookCourt(park, court, date, time):
 
     response = requests.post(url, headers=headers, cookies=cookies, data=data)
 
-    print("Status:", response.status_code)
+    return response.status_code
 
 def addDiscount(discountCode):
     url = "https://tennissheffield.com/basket/discount"
@@ -98,7 +98,7 @@ def addDiscount(discountCode):
 
     response = requests.post(url, headers=headers, cookies=cookies, data=data)
 
-    print("Status:", response.status_code)
+    return response.status_code
 
 
 def checkCourtAvailability(park, date, time):
@@ -155,29 +155,19 @@ def to_ampm(time_str):
     else:
         return f"{hour-12}pm"
 
-'''
-Code to book for devs courts
+if __name__ == "__main__":
 
-courts = ["1", "2", "3", "4", "5"]
-times = ["12:00", "13:00", "14:00", "15:00"]
-location = "graves_park"
-date = "2026-02-28"
+    courts = ["1", "2", "3", "4", "5"]
+    times = ["12:00", "13:00", "14:00", "15:00"]
+    location = "graves_park"
+    date = "2026-03-07"
 
-for time in times:
-    print (f"Booking for {time}...")
-    for court in courts:
-        print (f"Booking for court {court}...")
+    for time in times:
+        print (f"Booking for {time}...")
+        for court in courts:
+            print (f"Booking for court {court}...")
 
-        bookCourt(location, court, date, time)
-        addDiscount(CURRENT_VOUCHER)
+            bookCourt(location, court, date, time)
+            addDiscount(CURRENT_VOUCHER)
 
-        buffer = input("Press Enter to continue...")
-
-print (checkCourtAvailability("graves-park", "2026-02-11", to_ampm("12:00")))
-'''
-
-#bookCourt("weston_park", "1", "2026-02-23", "11:00")
-#addDiscount(CURRENT_VOUCHER)
-
-possible, court_name = checkCourtAvailability("weston-park", "2026-02-23", to_ampm("11:00"))
-print(f"Court available: {possible}, Court name: {court_name}")
+            buffer = input("Press Enter to continue...")

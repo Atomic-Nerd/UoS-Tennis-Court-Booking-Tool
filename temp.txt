@@ -1,0 +1,17 @@
+curl ^"https://tennissheffield.com/ajax/basket-court^" ^
+  -H ^"accept: application/json^" ^
+  -H ^"accept-language: en-US,en;q=0.9^" ^
+  -H ^"content-type: application/x-www-form-urlencoded^" ^
+  -b ^"__stripe_mid=da9e2967-c117-4e32-801d-ff71c7362ee6eb519f; ct=eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJleHAiOjE3NzQxMDMzODcsImNpZCI6NzcwNTIsImZpcnN0bmFtZSI6IlRvcmluIiwibGFzdG5hbWUiOiJNY1ZlYW4iLCJ0b2tlbiI6ImN1c3QtMDU4Nzc1NTU4MThhZTVmZjdmY2Q1OTc3MmE1MDFkNDIxMGI0OTdhYmEyMTMzOTU3YmRiNjA5ZmJmYjZmZTdmNTkwMTVkNmQyOTNkZTEyMjlmYTJhOGE0OGE1YzI4YzBhNjAyNWQzYWE0YjVjMmIzMmQ0NDQ5YyJ9.FENRYtx3Q4P5RI61iqWaexwcHRktsR6ZFxDINOd_6g7XU-Ndi-QDML4Y7ipjH36PL9arnA4RePT5PKLOVMQnSREL6SFRxg97YZJyLB_vZo0TjmkoSLYfzR462Se9l1vqLMGj9ZGajLBlyD6-0Omcd1xfONdygfpC82ei2DwOhkubliERIMYHYDcJa3MKrpxmzPF-8-X4jPIWAYNZMO38DbXvUnWlVIyRUHomNkDrdh4JDYNBWqZN3LqPaMB-t64Je1QYieHLNPpMkHqJDsqP-5JOCjxee3vD2Dv12SVrJiJKq7ag2R8kcxQNruaw_qPc0hbILL0dUihQJOI6H4mGnw; sess=qmos2hngsg7kgn8lb8ba3ud5ia; __stripe_sid=5a25fbf7-f580-493d-af04-f9ed01273cab9e7dc2^" ^
+  -H ^"origin: https://tennissheffield.com^" ^
+  -H ^"priority: u=1, i^" ^
+  -H ^"referer: https://tennissheffield.com/book/courts/bingham-park^" ^
+  -H ^"sec-ch-ua: ^\^"Not:A-Brand^\^";v=^\^"99^\^", ^\^"Google Chrome^\^";v=^\^"145^\^", ^\^"Chromium^\^";v=^\^"145^\^"^" ^
+  -H ^"sec-ch-ua-mobile: ?0^" ^
+  -H ^"sec-ch-ua-platform: ^\^"Windows^\^"^" ^
+  -H ^"sec-fetch-dest: empty^" ^
+  -H ^"sec-fetch-mode: cors^" ^
+  -H ^"sec-fetch-site: same-origin^" ^
+  -H ^"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36^" ^
+  -H ^"x-requested-with: XMLHttpRequest^" ^
+  --data-raw ^"mode=add^&court=76_100_2026-02-24_16^%^3A00^"

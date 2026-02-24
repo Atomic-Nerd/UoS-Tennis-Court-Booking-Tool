@@ -1,19 +1,59 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import threading
-from main import checkCourtAvailability 
-
+from main import CURRENT_VOUCHER, checkCourtAvailability, bookCourt, addDiscount
+from datetime import datetime
+from sendEmail import send_email_booked
 # ---------- Helper Functions ----------
 
-def set_status(row, text="", color="white"):
+def manual_court_popup(row):
+    popup = tk.Toplevel(root)
+    popup.title("Gate Code Input")
+    popup.grab_set()
+    popup.resizable(False, False)
+
+    width = 350
+    height = 180
+
+    # Get main window position & size
+    root.update_idletasks()
+    x = root.winfo_x() + (root.winfo_width() // 2) - (width // 2)
+    y = root.winfo_y() + (root.winfo_height() // 2) - (height // 2)
+
+    popup.geometry(f"{width}x{height}+{x}+{y}")
+
+    # ---- UI ----
+    ttk.Label(popup, text="Enter gate code:", font=("Arial", 11)).pack(pady=(20, 10))
+
+    entry = tk.Entry(popup, justify="center", font=("Arial", 12))
+    entry.pack(pady=5)
+    entry.focus()
+
+    def confirm():
+        gate_code = entry.get()
+        email = entries[row][0].get()
+        park = entries[row][2].get()
+        date = entries[row][3].get()
+        time = entries[row][4].get()
+        court = entries[row][5].get().split(" ")[1]
+
+        send_email_booked(email, park, date, time, court, gate_code)
+
+        entries[row][6].config(state="disabled")
+        popup.destroy()
+
+    ttk.Button(popup, text="Confirm", command=confirm).pack(pady=20)
+
+    # Allow Enter key to submit
+    popup.bind("<Return>", lambda event: confirm())
+
+def set_status(row, text=""):
     """Set the status box text and background color."""
-    status = entries[row][5]
+    status = entries[row][5]  # Index 6 corresponds to the Status column
     status.config(state="normal")
     status.delete(0, "end")
     status.insert(0, text)
-    status.config(bg=color)
     status.config(state="readonly")
-
 
 def checkBookingStatus(row):
     """Check booking status for a row."""
@@ -27,11 +67,11 @@ def checkBookingStatus(row):
     
     if not valid:
         print(f"Insufficient data to check booking status for row {row}")
-        set_status(row, "Invalid", "red")
+        set_status(row, "Invalid")
         return
 
     # Show "..." while checking
-    set_status(row, "...", "yellow")
+    set_status(row, "...")
     
     park_slug = park.lower().replace(" ", "-")
     day, month, year = date.split("/")
@@ -45,41 +85,87 @@ def checkBookingStatus(row):
     # Update status with color
     if available:
         print(f"Court available: {court_name}")
-        set_status(row, "Available", "lightgreen")
+        set_status(row, court_name)
     else:
         print("Court unavailable")
-        set_status(row, "Unavailable", "red")
+        set_status(row, "Unavailable")
+        entries[row][6].config(state="disabled")
 
+def bookAndDiscountCourt(row):
+    """Book the court for the given row."""
+    email = entries[row][0].get()
+    firstName = entries[row][1].get().split(" ")[0]
+    park = entries[row][2].get().lower().replace(" ", "_")
+    date = entries[row][3].get()
 
-def paste_into_row(row):
-    """Paste clipboard content into a row's first 4 columns."""
+    day, month, year = date.split("/")
+    date_formatted = f"{year}-{month}-{day}"
+
+    time = entries[row][4].get()
+
+    time_Formatted = datetime.strptime(time, "%I%p").strftime("%H:%M")
+
+    court = entries[row][5].get().split(" ")
+    if len(court) > 1:
+        court = court[1]
+    else:
+        court = court[0]
+
+    print(f"Attempting to book court for {firstName} at {park} on {date_formatted} at {time_Formatted} with email {email}, court: {court}")
+
+    if court in ["Unavailable", "Invalid", ""]:
+        messagebox.showerror("Error", "Court Unavailable for Booking.")
+        return
+    response1 = bookCourt(park, court, date_formatted, time_Formatted)
+    response2 = addDiscount(CURRENT_VOUCHER)
+
+    if response1 == 200 and response2 == 200:
+        manual_court_popup(row)
+    else:
+        messagebox.showerror("Error", "Booking or Discount Failed. Check console for details.")
+
+def paste_into_table():
     try:
         data = root.clipboard_get()
     except tk.TclError:
         return 
 
-    parts = data.split("\t")  # Google Sheets uses tabs
+    lines = data.split("\n")
 
-    for i in range(min(4, len(parts))):
-        entries[row][1 + i].delete(0, tk.END)
-        entries[row][1 + i].insert(0, parts[i])
+    for row in range(len(lines)):
+        
+        if row != 0:
+            add_row() 
 
-    # Run booking check in a separate thread to prevent freeze
-    threading.Thread(target=checkBookingStatus, args=(row,), daemon=True).start()
+        parts = lines[row].split("\t")  # Google Sheets uses tabs
 
+        for i in range(min(5, len(parts))):
+            entries[row][i].delete(0, tk.END)
+            entries[row][i].insert(0, parts[i])
 
-def delete_row():
-    """Delete the last row (except row 0)."""
+        # Run booking check in a separate thread to prevent freeze
+        threading.Thread(target=checkBookingStatus, args=(row,), daemon=True).start()
+
+def clear_table():
+    """Delete all rows except row 0 and clear row 0 contents."""
     global row_count
-    if row_count == 0:
-        return
 
-    for widget in entries[row_count]:
-        widget.destroy()
+    # Delete all rows except row 0
+    for row in range(1, row_count + 1):
+        for widget in entries[row]:
+            widget.destroy()
 
-    del entries[row_count]
-    row_count -= 1
+    # Clear row 0 contents
+    for col in range(5):
+        entries[0][col].delete(0, tk.END)
 
+    # Clear status column separately (readonly field)
+    entries[0][5].config(state="normal")
+    entries[0][5].delete(0, tk.END)
+    entries[0][5].config(state="readonly")
+
+    # Reset row_count
+    row_count = 0
 
 def add_row():
     """Add a new row to the table."""
@@ -89,26 +175,20 @@ def add_row():
 
     grid_row = row_count + 1  # +1 because headers are on row 0
 
-    # Paste button
-    paste_btn = ttk.Button(table_frame, text="P", width=3,
-                           command=lambda r=row_count: paste_into_row(r))
-    paste_btn.grid(row=grid_row, column=0, padx=5, pady=5)
-    entries[row_count].append(paste_btn)
-
-    # Main 4 input columns
-    for col in range(4):
+    # Main 5 input columns
+    for col in range(5):
         entry = tk.Entry(table_frame)
-        entry.grid(row=grid_row, column=col + 1, padx=5, pady=5)
+        entry.grid(row=grid_row, column=col, padx=5, pady=5)
         entries[row_count].append(entry)
 
-    # Status box (tk.Entry to allow background color)
+    # Status box
     status = tk.Entry(table_frame, width=10, state="readonly")
     status.grid(row=grid_row, column=5, padx=5, pady=5)
     status.insert(0, "")
     entries[row_count].append(status)
 
-    # "B" button
-    b_button = ttk.Button(table_frame, text="B", width=2)
+    # "B" Book button
+    b_button = ttk.Button(table_frame, text="B", width=2, command=lambda r=row_count: bookAndDiscountCourt(r))
     b_button.grid(row=grid_row, column=6, padx=5, pady=5)
     entries[row_count].append(b_button)
 
@@ -122,7 +202,7 @@ table_frame = tk.Frame(root)
 table_frame.pack(padx=10, pady=10)
 
 # Column headers
-headers = ["", "Email", "Park", "Date", "Time", "Status", "Book"]
+headers = ["Email", "Name", "Park", "Date", "Time", "Status", "Book"]
 for col, text in enumerate(headers):
     label = ttk.Label(table_frame, text=text, font=("Arial", 10, "bold"))
     label.grid(row=0, column=col, padx=5, pady=5)
@@ -134,16 +214,10 @@ row_count = 0
 
 entries[row_count] = []
 
-# Paste button
-paste_btn = ttk.Button(table_frame, text="P", width=3,
-                       command=lambda r=row_count: paste_into_row(r))
-paste_btn.grid(row=1, column=0, padx=5, pady=5)
-entries[row_count].append(paste_btn)
-
 # Editable input fields
-for col in range(4):
+for col in range(5):
     entry = tk.Entry(table_frame)
-    entry.grid(row=1, column=col + 1, padx=5, pady=5)
+    entry.grid(row=1, column=col, padx=5, pady=5)
     entries[row_count].append(entry)
 
 # Status box
@@ -153,7 +227,7 @@ status.insert(0, "")
 entries[row_count].append(status)
 
 # B button
-b_button = ttk.Button(table_frame, text="B", width=2)
+b_button = ttk.Button(table_frame, text="B", width=2, command=lambda r=row_count: bookAndDiscountCourt(r))
 b_button.grid(row=1, column=6, padx=5, pady=5)
 entries[row_count].append(b_button)
 
@@ -161,10 +235,10 @@ entries[row_count].append(b_button)
 button_frame = tk.Frame(root)
 button_frame.pack(pady=10)
 
-add_button = ttk.Button(button_frame, text="Add Row", command=add_row)
-add_button.pack(side=tk.LEFT, padx=5)
+paste_btn = ttk.Button(button_frame, text="Paste", command=paste_into_table)
+paste_btn.pack(side=tk.LEFT, padx=5)
 
-del_button = ttk.Button(button_frame, text="Delete Row", command=delete_row)
-del_button.pack(side=tk.LEFT, padx=5)
+clear_btn = ttk.Button(button_frame, text="Clear Table", command=clear_table)
+clear_btn.pack(side=tk.LEFT, padx=5)
 
 root.mainloop()
