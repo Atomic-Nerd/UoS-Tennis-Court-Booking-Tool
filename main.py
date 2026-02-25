@@ -199,6 +199,6 @@ if __name__ == "__main__":
                 print (f"Booking for court {court}...")
 
                 bookCourt(location, court, date, time)
-                addDiscount(CURRENT_VOUCHER)
+                addDiscount(code)
 
                 buffer = input("Press Enter to continue...")
