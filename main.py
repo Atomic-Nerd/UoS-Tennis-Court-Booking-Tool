@@ -7,7 +7,6 @@ import os
 load_dotenv()
 DAILY_COOKIE = os.getenv("DAILY_COOKIE")
 DAILY_SESSION = os.getenv("DAILY_SESSION")
-CURRENT_VOUCHER = os.getenv("CURRENT_VOUCHER")
 
 def bookCourt(park, court, date, time):
     url = "https://tennissheffield.com/ajax/basket-court"
@@ -144,6 +143,33 @@ def checkCourtAvailability(park, date, time):
         else:
             print("Could not find the table inside the form.")
 
+def checkVoucher():
+    url = f"https://tennissheffield.com/account"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15",
+        "Accept-Language": "en-US,en;q=0.9"
+    }
+
+    cookies = {
+        "ct": DAILY_COOKIE,
+        "sess": DAILY_SESSION
+    }
+
+    response = requests.get(url, headers=headers, cookies=cookies)
+    html_content = response.text
+
+    soup = BeautifulSoup(html_content, "html.parser")
+
+    discount_header = soup.find("h2", id="discounts")
+    table = discount_header.find_next_sibling("table") 
+
+    table = table.find_all("tr")[1]
+    code = table.find_all("td")[0].text.strip()
+    uses = table.find_all("td")[2].text.strip()
+
+    return code, uses
+
 def to_ampm(time_str):
     hour = int(time_str.split(":")[0])
     if hour == 0:
@@ -157,17 +183,22 @@ def to_ampm(time_str):
 
 if __name__ == "__main__":
 
-    courts = ["1", "2", "3", "4", "5"]
-    times = ["12:00", "13:00", "14:00", "15:00"]
-    location = "graves_park"
-    date = "2026-03-07"
+    code, uses = checkVoucher()
+    print (f"Current voucher: {code} with {uses} uses remaining")
 
-    for time in times:
-        print (f"Booking for {time}...")
-        for court in courts:
-            print (f"Booking for court {court}...")
+    bookingDevs = False 
+    if bookingDevs:
+        courts = ["1", "2", "3", "4", "5"]
+        times = ["12:00", "13:00", "14:00", "15:00"]
+        location = "graves_park"
+        date = "2026-03-07"
 
-            bookCourt(location, court, date, time)
-            addDiscount(CURRENT_VOUCHER)
+        for time in times:
+            print (f"Booking for {time}...")
+            for court in courts:
+                print (f"Booking for court {court}...")
 
-            buffer = input("Press Enter to continue...")
+                bookCourt(location, court, date, time)
+                addDiscount(CURRENT_VOUCHER)
+
+                buffer = input("Press Enter to continue...")

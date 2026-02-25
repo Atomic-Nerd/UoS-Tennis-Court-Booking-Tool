@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
-from main import CURRENT_VOUCHER, checkCourtAvailability, bookCourt, addDiscount
+from main import checkCourtAvailability, bookCourt, addDiscount, checkVoucher
 from datetime import datetime
 from sendEmail import send_email_booked
 # ---------- Helper Functions ----------
@@ -117,10 +117,12 @@ def bookAndDiscountCourt(row):
         messagebox.showerror("Error", "Court Unavailable for Booking.")
         return
     response1 = bookCourt(park, court, date_formatted, time_Formatted)
-    response2 = addDiscount(CURRENT_VOUCHER)
+    response2 = addDiscount(voucher_code)
 
     if response1 == 200 and response2 == 200:
         manual_court_popup(row)
+        uses_left -= 1 
+        uses_label.config(text=f"Uses left: {uses_left}")
     else:
         messagebox.showerror("Error", "Booking or Discount Failed. Check console for details.")
 
@@ -192,6 +194,15 @@ def add_row():
     b_button.grid(row=grid_row, column=6, padx=5, pady=5)
     entries[row_count].append(b_button)
 
+uses_left = 0 
+voucher_code = "NA"
+
+def populate_voucher_info():
+    global voucher_code, uses_left
+    voucher_code, uses_left = checkVoucher()
+
+    voucher_label.config(text=f"Voucher: {voucher_code}")
+    uses_label.config(text=f"Uses left: {uses_left}")
 
 # ---------- GUI Setup ----------
 
@@ -209,6 +220,9 @@ for col, text in enumerate(headers):
 
 entries = {}
 row_count = 0
+
+voucher = "Loading..."
+uses_left = "Loading..."
 
 # ---- Initial Row ----
 
@@ -230,6 +244,17 @@ entries[row_count].append(status)
 b_button = ttk.Button(table_frame, text="B", width=2, command=lambda r=row_count: bookAndDiscountCourt(r))
 b_button.grid(row=1, column=6, padx=5, pady=5)
 entries[row_count].append(b_button)
+
+# Voucher display (between table and buttons)
+voucher_frame = tk.Frame(root)
+voucher_frame.pack(pady=5, anchor="w")
+
+voucher_label = tk.Label(voucher_frame, text=f"Voucher: {voucher}", font=("Arial", 10), padx=15)
+voucher_label.pack(anchor="w")
+
+uses_label = tk.Label(voucher_frame, text=f"Uses left: {uses_left}", font=("Arial", 10), padx=15)
+uses_label.pack(anchor="w")
+root.after(100, populate_voucher_info)
 
 # Buttons to add & delete rows
 button_frame = tk.Frame(root)
