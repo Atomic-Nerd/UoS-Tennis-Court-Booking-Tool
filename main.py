@@ -191,14 +191,18 @@ if __name__ == "__main__":
         courts = ["1", "2", "3", "4", "5"]
         times = ["12:00", "13:00", "14:00", "15:00"]
         location = "graves_park"
-        date = "2026-03-07"
+        date = "2026-03-11"
 
         for time in times:
             print (f"Booking for {time}...")
             for court in courts:
+
                 print (f"Booking for court {court}...")
 
                 bookCourt(location, court, date, time)
                 addDiscount(code)
+
+                uses = int(uses) - 1
+                print (f"Uses left: {uses}")
 
                 buffer = input("Press Enter to continue...")
