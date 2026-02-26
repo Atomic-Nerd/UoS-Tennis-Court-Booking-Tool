@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
 from main import checkCourtAvailability, bookCourt, addDiscount, checkVoucher
-from datetime import datetime
+from datetime import date, datetime
 from sendEmail import send_email_booked
 # ---------- Helper Functions ----------
 
@@ -57,10 +57,23 @@ def set_status(row, text=""):
 
 def checkBookingStatus(row):
     """Check booking status for a row."""
+
+    blocked_hours = {
+        "monday": ["12:00", "13:00", "14:00", "15:00"],
+        "wednesday": ["12:00", "13:00", "14:00", "15:00", "16:00"],
+        "friday": ["14:00", "15:00"]
+    }
+
+    days_buffer = 3
+
     park = entries[row][2].get()
     date = entries[row][3].get()
     time = entries[row][4].get()
     
+    today = datetime.now().date()
+    booking_date = datetime.strptime(date, '%d/%m/%Y').date()
+    days_difference = (booking_date - today).days
+
     valid = True
     if park == "" or date == "" or time == "":
         valid = False
@@ -68,6 +81,13 @@ def checkBookingStatus(row):
     if not valid:
         print(f"Insufficient data to check booking status for row {row}")
         set_status(row, "Invalid")
+        entries[row][6].config(state="disabled")
+        return
+
+    if days_difference < days_buffer:
+        print(f"Booking date must be at least {days_buffer} days in the future.")
+        set_status(row, "Denied")
+        entries[row][6].config(state="disabled")
         return
 
     # Show "..." while checking
@@ -92,6 +112,8 @@ def checkBookingStatus(row):
         entries[row][6].config(state="disabled")
 
 def bookAndDiscountCourt(row):
+    global uses_left
+
     """Book the court for the given row."""
     email = entries[row][0].get()
     firstName = entries[row][1].get().split(" ")[0]
@@ -199,8 +221,10 @@ voucher_code = "NA"
 
 def populate_voucher_info():
     global voucher_code, uses_left
-    voucher_code, uses_left = checkVoucher()
+    voucher_code, uses_left = checkVoucher()#
 
+    uses_left = int(uses_left) 
+    
     voucher_label.config(text=f"Voucher: {voucher_code}")
     uses_label.config(text=f"Uses left: {uses_left}")
 
