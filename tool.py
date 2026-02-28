@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox
 import threading
 from main import checkCourtAvailability, bookCourt, addDiscount, checkVoucher
 from datetime import date, datetime
-from sendEmail import send_email_booked
+from sendEmail import send_email_booked, send_email_denied, send_email_unavailable
 # ---------- Helper Functions ----------
 
 def manual_court_popup(row):
@@ -88,7 +88,8 @@ def checkBookingStatus(row):
     if days_difference < days_buffer:
         print(f"Booking date must be at least {days_buffer} days in the future. Date requested: {request_date}, Booking date: {booking_date}")
         set_status(row, "Denied")
-        entries[row][7].config(state="disabled")
+        entries[row][7].config(text="D")
+        entries[row][7].config(command=lambda: denyBooking(row, f"booking must be made at least {days_buffer} days in advance"))
         return
 
     # Show "..." while checking
@@ -96,7 +97,7 @@ def checkBookingStatus(row):
     
     park_slug = park.lower().replace(" ", "-")
     day, month, year = date.split("/")
-    date_formatted = f"{year}-{month}-{day}"
+    date_formatted = f"{year}-{month}-{day}"    
     
     print(f"Checking booking status at {park_slug} on {date_formatted} at {time}")
     
@@ -110,7 +111,22 @@ def checkBookingStatus(row):
     else:
         print("Court unavailable")
         set_status(row, "Unavailable")
-        entries[row][7].config(state="disabled")
+        entries[row][7].config(text="U")
+        entries[row][7].config(command=lambda: denyBooking(row, f"court unavailable"))
+
+
+def denyBooking(row, reason):
+    email = entries[row][1].get()
+    name = entries[row][2].get().split(" ")[0]
+
+    if reason == "you have already booked your 1 hour for this week":
+        send_email_denied(email, name, reason) 
+    elif reason != "court unavailable":
+        send_email_denied(email, name, reason) 
+    else: 
+        send_email_unavailable(email, name)
+
+    entries[row][7].config(state="disabled")
 
 def bookAndDiscountCourt(row):
     global uses_left
@@ -186,9 +202,9 @@ def clear_table():
         entries[0][col].delete(0, tk.END)
 
     # Clear status column separately (readonly field)
-    entries[0][7].config(state="normal")
-    entries[0][7].delete(0, tk.END)
-    entries[0][7].config(state="readonly")
+    entries[0][6].config(state="normal")
+    entries[0][6].delete(0, tk.END)
+    entries[0][6].config(state="readonly")
 
     # Reset row_count
     row_count = 0
