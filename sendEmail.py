@@ -51,9 +51,9 @@ def send_email_denied(email, name, reason):
     msg["Subject"] = "UoS Tennis Court Booking"
 
     if reason == "you have already booked your 1 hour for this week":
-        msg.set_content(f"Hi {name},\n\nUnfortunately, your court booking for the slot you requested is denied.\n\nReason: {reason}\n\nKind regards,\nJonny")
+        msg.set_content(f"Hi {name},\n\nUnfortunately, your court booking for the slot you requested is denied.\nReason: {reason}\n\nKind regards,\nJonny")
     else:
-        msg.set_content(f"Hi {name},\n\nUnfortunately, your court booking for the slot you requested is denied.\n\nReason: {reason}\n\nPlease re-submit a booking request for a different time slot.\n\nKind regards,\nJonny")
+        msg.set_content(f"Hi {name},\n\nUnfortunately, your court booking for the slot you requested is denied.\nReason: {reason}\n\nPlease re-submit a booking request for a different time slot.\n\nKind regards,\nJonny")
 
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:

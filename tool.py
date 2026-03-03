@@ -2,9 +2,46 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
 from main import checkCourtAvailability, bookCourt, addDiscount, checkVoucher
-from datetime import date, datetime
+from datetime import datetime, timedelta
 from sendEmail import send_email_booked, send_email_denied, send_email_unavailable
+import json
+import os
+
 # ---------- Helper Functions ----------
+
+def get_week_monday():
+    print ("Calculating current week's Monday...")
+    today = datetime.now().date()
+    monday = today - timedelta(days=today.weekday())
+    print (f"Current week's Monday: {monday}")
+    return monday.isoformat()  # "2026-03-02"
+
+DB_FILE = "weekly_bookings.json"
+weekly_db = {}
+current_week_key = get_week_monday()
+
+def init_week_database():
+    global weekly_db
+
+    print ("Initializing weekly database...")
+    # Load existing database
+    if os.path.exists(DB_FILE):
+        with open(DB_FILE, "r") as f:
+            weekly_db = json.load(f)
+    else:
+        weekly_db = {}
+
+    # Ensure this week exists
+    if current_week_key not in weekly_db:
+        print (f"No entry for current week ({current_week_key}). Creating new entry.")
+        weekly_db[current_week_key] = []
+        save_database()
+    else:
+        print (f"Entry for current week ({current_week_key}) already exists.")
+
+def save_database():
+    with open(DB_FILE, "w") as f:
+        json.dump(weekly_db, f, indent=4)
 
 def manual_court_popup(row):
     popup = tk.Toplevel(root)
@@ -70,6 +107,7 @@ def checkBookingStatus(row):
     park = entries[row][3].get()
     date = entries[row][4].get()
     time = entries[row][5].get()
+    email = entries[row][1].get()
     
     request_date = datetime.strptime(request_time, '%d/%m/%Y').date()
     booking_date = datetime.strptime(date, '%d/%m/%Y').date()
@@ -87,12 +125,29 @@ def checkBookingStatus(row):
 
     if days_difference < days_buffer:
         print(f"Booking date must be at least {days_buffer} days in the future. Date requested: {request_date}, Booking date: {booking_date}")
-        set_status(row, "Denied")
+        set_status(row, "Not 3 Days")
         entries[row][7].config(text="D")
         entries[row][7].config(command=lambda: denyBooking(row, f"booking must be made at least {days_buffer} days in advance"))
         return
 
-    # Show "..." while checking
+    day_of_week = booking_date.strftime("%A").lower() 
+    dt = datetime.strptime(time, "%I%p")
+    formatted = dt.strftime("%H:%M") #13:00
+
+    if day_of_week in blocked_hours and formatted in blocked_hours[day_of_week]:
+        print(f"Time slot {time} on {day_of_week.capitalize()}s is blocked for booking.")
+        set_status(row, "Blocked Hour")
+        entries[row][7].config(text="D")
+        entries[row][7].config(command=lambda: denyBooking(row, f"{time} on {day_of_week.capitalize()}s is unavailable for booking due to social sessions."))
+        return
+    
+    if email in weekly_db[current_week_key]:
+        print(f"User {email} has already booked courts this week.")
+        set_status(row, "Hit Limit")
+        entries[row][7].config(text="D")
+        entries[row][7].config(command=lambda: denyBooking(row, f"you have already booked your 1 hour for this week"))
+        return
+
     set_status(row, "...")
     
     park_slug = park.lower().replace(" ", "-")
@@ -101,10 +156,8 @@ def checkBookingStatus(row):
     
     print(f"Checking booking status at {park_slug} on {date_formatted} at {time}")
     
-    # Call your API (this can take time)
     available, court_name = checkCourtAvailability(park_slug, date_formatted, time)
 
-    # Update status with color
     if available:
         print(f"Court available: {court_name}")
         set_status(row, court_name)
@@ -163,6 +216,10 @@ def bookAndDiscountCourt(row):
         manual_court_popup(row)
         uses_left -= 1 
         uses_label.config(text=f"Uses left: {uses_left}")
+        weekly_db[current_week_key].append(email)
+        save_database()
+
+        print (f"Booking successful for {email}, court {court} on {date_formatted} at {time_Formatted}. Discount applied. Emailed added to database. Uses left: {uses_left}")
     else:
         messagebox.showerror("Error", "Booking or Discount Failed. Check console for details.")
 
@@ -308,4 +365,5 @@ paste_btn.pack(side=tk.LEFT, padx=5)
 clear_btn = ttk.Button(button_frame, text="Clear Table", command=clear_table)
 clear_btn.pack(side=tk.LEFT, padx=5)
 
+init_week_database()
 root.mainloop()
