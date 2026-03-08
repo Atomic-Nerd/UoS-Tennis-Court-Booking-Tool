@@ -186,12 +186,12 @@ if __name__ == "__main__":
     code, uses = checkVoucher()
     print (f"Current voucher: {code} with {uses} uses remaining")
 
-    bookingDevs = False 
+    bookingDevs = True 
     if bookingDevs:
         courts = ["1", "2", "3", "4", "5"]
         times = ["12:00", "13:00", "14:00", "15:00"]
         location = "graves_park"
-        date = "2026-03-11"
+        date = "2026-03-21"
 
         for time in times:
             print (f"Booking for {time}...")

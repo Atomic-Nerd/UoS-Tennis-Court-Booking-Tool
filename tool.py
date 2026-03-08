@@ -9,16 +9,13 @@ import os
 
 # ---------- Helper Functions ----------
 
-def get_week_monday():
-    print ("Calculating current week's Monday...")
-    today = datetime.now().date()
-    monday = today - timedelta(days=today.weekday())
-    print (f"Current week's Monday: {monday}")
+def get_week_monday(date):
+    monday = date - timedelta(days=date.weekday())
     return monday.isoformat()  # "2026-03-02"
 
 DB_FILE = "weekly_bookings.json"
 weekly_db = {}
-current_week_key = get_week_monday()
+current_week_key = get_week_monday(datetime.now().date())
 
 def init_week_database():
     global weekly_db
@@ -113,6 +110,11 @@ def checkBookingStatus(row):
     booking_date = datetime.strptime(date, '%d/%m/%Y').date()
     days_difference = (booking_date - request_date).days
 
+    booking_monday = get_week_monday(booking_date) 
+    if booking_monday not in weekly_db:
+        weekly_db[booking_monday] = []
+        save_database()
+
     valid = True
     if park == "" or date == "" or time == "":
         valid = False
@@ -141,7 +143,7 @@ def checkBookingStatus(row):
         entries[row][7].config(command=lambda: denyBooking(row, f"{time} on {day_of_week.capitalize()}s is unavailable for booking due to social sessions."))
         return
     
-    if email in weekly_db[current_week_key]:
+    if email in weekly_db[booking_monday]:
         print(f"User {email} has already booked courts this week.")
         set_status(row, "Hit Limit")
         entries[row][7].config(text="D")
@@ -198,6 +200,9 @@ def bookAndDiscountCourt(row):
 
     time_Formatted = datetime.strptime(time, "%I%p").strftime("%H:%M")
 
+    booking_date = datetime.strptime(date, '%d/%m/%Y').date()
+    booking_monday = get_week_monday(booking_date) 
+
     court = entries[row][6].get().split(" ")
     if len(court) > 1:
         court = court[1]
@@ -216,7 +221,7 @@ def bookAndDiscountCourt(row):
         manual_court_popup(row)
         uses_left -= 1 
         uses_label.config(text=f"Uses left: {uses_left}")
-        weekly_db[current_week_key].append(email)
+        weekly_db[booking_monday].append(email)
         save_database()
 
         print (f"Booking successful for {email}, court {court} on {date_formatted} at {time_Formatted}. Discount applied. Emailed added to database. Uses left: {uses_left}")
