@@ -93,7 +93,8 @@ def checkBookingStatus(row):
     """Check booking status for a row."""
 
     blocked_hours = {
-        "monday": ["12:00", "13:00", "14:00", "15:00"],
+        #Old Monday - "monday": ["12:00", "13:00", "14:00", "15:00"],
+        "monday": ["15:00"],
         "wednesday": ["12:00", "13:00", "14:00", "15:00", "16:00"],
         "friday": ["14:00", "15:00"]
     }
