@@ -32,7 +32,8 @@ def bookCourt(park, court, date, time):
     park_IDs = {
         "weston_park": "37",
         "graves_park": "36",
-        "bingham_park": "76"
+        "bingham_park": "76",
+        "millhouses_park": "33"
     }
 
     court_IDs = {
@@ -50,6 +51,14 @@ def bookCourt(park, court, date, time):
         "bingham_park": {
             "1": "100",
             "2": "101",
+        },
+        "millhouses_park": {
+            "1": "54",
+            "2": "55",
+            "3": "56",
+            "4": "57",
+            "5": "58",
+            "6": "59"
         }
     }
 
